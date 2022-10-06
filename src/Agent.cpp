@@ -29,7 +29,6 @@
  *
  * <http://gamma.cs.unc.edu/RVO2/>
  */
-
 #include "Agent.h"
 
 #include "KdTree.h"
@@ -357,31 +356,42 @@ namespace RVO {
 		}
 	}
 
-	void Agent::insertAgentNeighbor(const Agent *agent, float &rangeSq)
-	{
-		if (this != agent) {
-			const float distSq = absSq(position_ - agent->position_);
+    double cosine_similarity(Vector2 a, Vector2 b) {
+        double aa = a.x() * a.x() + a.y() * a.y();
+        double bb = b.x() * b.x() + b.y() * b.y();
+        double ab = a.x() * b.x() + a.y() * b.y();
+        return ab / sqrt(aa * bb);
+    }
 
-			if (distSq < rangeSq) {
-				if (agentNeighbors_.size() < maxNeighbors_) {
-					agentNeighbors_.push_back(std::make_pair(distSq, agent));
-				}
+    void Agent::insertAgentNeighbor(const Agent *agent, float &rangeSq) {
+        if (this == agent) return;
 
-				size_t i = agentNeighbors_.size() - 1;
+        const float distSq = absSq(position_ - agent->position_);
+        if (distSq >= rangeSq) return;
 
-				while (i != 0 && distSq < agentNeighbors_[i - 1].first) {
-					agentNeighbors_[i] = agentNeighbors_[i - 1];
-					--i;
-				}
+        // Not neighbors if both agents cannot "see" the other agent.
+        // Field of view: 200 deg
+        if (cosine_similarity(velocity_, agent->position_ - position_) < -0.17364817766 &&
+            cosine_similarity(agent->velocity_, position_ - agent->position_) < -0.17364817766)
+            return;
 
-				agentNeighbors_[i] = std::make_pair(distSq, agent);
+        if (agentNeighbors_.size() < maxNeighbors_) {
+            agentNeighbors_.push_back(std::make_pair(distSq, agent));
+        }
 
-				if (agentNeighbors_.size() == maxNeighbors_) {
-					rangeSq = agentNeighbors_.back().first;
-				}
-			}
-		}
-	}
+        size_t i = agentNeighbors_.size() - 1;
+
+        while (i != 0 && distSq < agentNeighbors_[i - 1].first) {
+            agentNeighbors_[i] = agentNeighbors_[i - 1];
+            --i;
+        }
+
+        agentNeighbors_[i] = std::make_pair(distSq, agent);
+
+        if (agentNeighbors_.size() == maxNeighbors_) {
+            rangeSq = agentNeighbors_.back().first;
+        }
+    }
 
 	void Agent::insertObstacleNeighbor(const Obstacle *obstacle, float rangeSq)
 	{
