@@ -29,6 +29,7 @@
  *
  * <http://gamma.cs.unc.edu/RVO2/>
  */
+#include <numeric>
 #include "Agent.h"
 
 #include "KdTree.h"
@@ -364,16 +365,33 @@ namespace RVO {
     }
 
     void Agent::insertAgentNeighbor(const Agent *agent, float &rangeSq) {
+        // TODO Move hardcoded constants to possibly make things configurable
+        int neighborVisibilityWindowSize_ = 4;
+        double fov = 210;
+        double veryCloseRatio = 0.12;
+
         if (this == agent) return;
 
         const float distSq = absSq(position_ - agent->position_);
         if (distSq >= rangeSq) return;
 
-        // Not neighbors if both agents cannot "see" the other agent.
-        // Field of view: 200 deg
-        if (cosine_similarity(velocity_, agent->position_ - position_) < -0.17364817766 &&
-            cosine_similarity(agent->velocity_, position_ - agent->position_) < -0.17364817766)
-            return;
+        // Not neighbors if the agent could not "see" the agent in the last N steps.
+        if (neighborVisibilityWindowSize_ > 0)
+        {
+            // The agent is visible if it is very close, or if it is in the FOV of 200 degrees
+            bool agentVeryClose = distSq < rangeSq * veryCloseRatio * veryCloseRatio;
+            bool agentInFOV = cosine_similarity(velocity_, agent->position_ - position_) > cos((fov/2)*M_PI/180);
+            bool agentVisible = agentVeryClose || agentInFOV;
+
+            std::deque<bool> visibilityWindow = neighborVisibilityWindowMap_[agent->id_];
+            visibilityWindow.push_front(agentVisible);
+            while (visibilityWindow.size() > neighborVisibilityWindowSize_) {
+                visibilityWindow.pop_back();
+            }
+            bool agentVisibleInWindow = std::accumulate(visibilityWindow.begin(), visibilityWindow.end(), false,
+                                                        std::logical_or<>());
+            if (!agentVisibleInWindow) return;
+        }
 
         if (agentNeighbors_.size() < maxNeighbors_) {
             agentNeighbors_.push_back(std::make_pair(distSq, agent));

@@ -38,6 +38,9 @@
  * \brief      Contains the Agent class.
  */
 
+#include <map>
+#include <deque>
+
 #include "Definitions.h"
 #include "RVOSimulator.h"
 
@@ -86,6 +89,7 @@ namespace RVO {
 		 */
 		void update();
 
+        std::map<size_t, std::deque<bool>> neighborVisibilityWindowMap_;
 		std::vector<std::pair<float, const Agent *> > agentNeighbors_;
 		size_t maxNeighbors_;
 		float maxSpeed_;
