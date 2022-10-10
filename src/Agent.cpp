@@ -31,6 +31,8 @@
  */
 #include <numeric>
 #include "Agent.h"
+#include <iostream>
+#include <memory>
 
 #include "KdTree.h"
 #include "Obstacle.h"
@@ -366,9 +368,9 @@ namespace RVO {
 
     void Agent::insertAgentNeighbor(const Agent *agent, float &rangeSq) {
         // TODO Move hardcoded constants to possibly make things configurable
-        int neighborVisibilityWindowSize_ = 4;
-        double fov = 210;
-        double veryCloseRatio = 0.12;
+        size_t neighborVisibilityWindowSize_ = 100;
+        double fov = 135;
+        double veryCloseRatio = 0.1;
 
         if (this == agent) return;
 
@@ -376,19 +378,23 @@ namespace RVO {
         if (distSq >= rangeSq) return;
 
         // Not neighbors if the agent could not "see" the agent in the last N steps.
-        if (neighborVisibilityWindowSize_ > 0)
-        {
+        if (neighborVisibilityWindowSize_ > 0) {
             // The agent is visible if it is very close, or if it is in the FOV of 200 degrees
             bool agentVeryClose = distSq < rangeSq * veryCloseRatio * veryCloseRatio;
-            bool agentInFOV = cosine_similarity(velocity_, agent->position_ - position_) > cos((fov/2)*M_PI/180);
+            bool agentInFOV = cosine_similarity(velocity_, agent->position_ - position_) > cos((fov / 2) * M_PI / 180);
             bool agentVisible = agentVeryClose || agentInFOV;
 
-            std::deque<bool> visibilityWindow = neighborVisibilityWindowMap_[agent->id_];
-            visibilityWindow.push_front(agentVisible);
-            while (visibilityWindow.size() > neighborVisibilityWindowSize_) {
-                visibilityWindow.pop_back();
+            if (neighborVisibilityWindowMap_.count(agent->id_) == 0) {
+                neighborVisibilityWindowMap_[agent->id_] = std::make_shared<std::deque<bool>>();
             }
-            bool agentVisibleInWindow = std::accumulate(visibilityWindow.begin(), visibilityWindow.end(), false,
+
+            const std::shared_ptr<std::deque<bool>> &visibilityWindow = neighborVisibilityWindowMap_[agent->id_];
+            visibilityWindow->push_front(agentVisible);
+            while (visibilityWindow->size() > neighborVisibilityWindowSize_) {
+                visibilityWindow->pop_back();
+            }
+
+            bool agentVisibleInWindow = std::accumulate(visibilityWindow->begin(), visibilityWindow->end(), false,
                                                         std::logical_or<>());
             if (!agentVisibleInWindow) return;
         }
