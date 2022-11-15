@@ -46,7 +46,13 @@ namespace RVO {
 		kdTree_ = new KdTree(this);
 	}
 
-	RVOSimulator::RVOSimulator(float timeStep, float neighborDist, size_t maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, const Vector2 &velocity) : defaultAgent_(NULL), globalTime_(0.0f), kdTree_(NULL), timeStep_(timeStep)
+    RVOSimulator::RVOSimulator(float timeStep, float neighborDist, size_t maxNeighbors, float timeHorizon,
+                               float timeHorizonObst, float radius, float maxSpeed, const Vector2 &velocity,
+                               float fov, float veryCloseRatio, size_t neighborVisibilityWindowSize)
+            : defaultAgent_(NULL),
+              globalTime_(0.0f),
+              kdTree_(NULL),
+              timeStep_(timeStep)
 	{
 		kdTree_ = new KdTree(this);
 		defaultAgent_ = new Agent(this);
@@ -57,8 +63,11 @@ namespace RVO {
 		defaultAgent_->radius_ = radius;
 		defaultAgent_->timeHorizon_ = timeHorizon;
 		defaultAgent_->timeHorizonObst_ = timeHorizonObst;
+        defaultAgent_->neighborVisibilityWindowSize_ = neighborVisibilityWindowSize;
+        defaultAgent_->fov_ = fov;
+        defaultAgent_->veryCloseRatio_ = veryCloseRatio;
 		defaultAgent_->velocity_ = velocity;
-	}
+    }
 
 	RVOSimulator::~RVOSimulator()
 	{
@@ -92,9 +101,13 @@ namespace RVO {
 		agent->radius_ = defaultAgent_->radius_;
 		agent->timeHorizon_ = defaultAgent_->timeHorizon_;
 		agent->timeHorizonObst_ = defaultAgent_->timeHorizonObst_;
-		agent->velocity_ = defaultAgent_->velocity_;
+        agent->neighborVisibilityWindowSize_ = defaultAgent_->neighborVisibilityWindowSize_;
+        agent->fov_ = defaultAgent_->fov_;
+        agent->veryCloseRatio_ = defaultAgent_->veryCloseRatio_;
+        agent->velocity_ = defaultAgent_->velocity_;
 
-		agent->id_ = agents_.size();
+
+        agent->id_ = agents_.size();
 
 		agents_.push_back(agent);
 
@@ -112,6 +125,9 @@ namespace RVO {
 		agent->radius_ = radius;
 		agent->timeHorizon_ = timeHorizon;
 		agent->timeHorizonObst_ = timeHorizonObst;
+        agent->neighborVisibilityWindowSize_ = defaultAgent_->neighborVisibilityWindowSize_;
+        agent->fov_ = defaultAgent_->fov_;
+        agent->veryCloseRatio_ = defaultAgent_->veryCloseRatio_;
 		agent->velocity_ = velocity;
 
 		agent->id_ = agents_.size();
@@ -342,10 +358,22 @@ namespace RVO {
 		agents_[agentNo]->prefVelocity_ = prefVelocity;
 	}
 
-	void RVOSimulator::setAgentRadius(size_t agentNo, float radius)
-	{
-		agents_[agentNo]->radius_ = radius;
-	}
+    void RVOSimulator::setAgentRadius(size_t agentNo, float radius)
+    {
+        agents_[agentNo]->radius_ = radius;
+    }
+
+    void RVOSimulator::setAgentFOV(size_t agentNo, float fov) {
+        agents_[agentNo]->fov_ = fov;
+    }
+
+    void RVOSimulator::setAgentVeryCloseRatio(size_t agentNo, float veryCloseRatio) {
+        agents_[agentNo]->veryCloseRatio_ = veryCloseRatio;
+    }
+
+    void RVOSimulator::setAgentNeighborVisibilityWindowSize(size_t agentNo, size_t neighborVisibilityWindowSize) {
+        agents_[agentNo]->neighborVisibilityWindowSize_ = neighborVisibilityWindowSize;
+    }
 
 	void RVOSimulator::setAgentTimeHorizon(size_t agentNo, float timeHorizon)
 	{

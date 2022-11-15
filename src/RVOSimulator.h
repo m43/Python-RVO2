@@ -85,52 +85,62 @@ namespace RVO {
 		 */
 		RVOSimulator();
 
-		/**
-		 * \brief      Constructs a simulator instance and sets the default
-		 *             properties for any new agent that is added.
-		 * \param      timeStep        The time step of the simulation.
-		 *                             Must be positive.
-		 * \param      neighborDist    The default maximum distance (center point
-		 *                             to center point) to other agents a new agent
-		 *                             takes into account in the navigation. The
-		 *                             larger this number, the longer he running
-		 *                             time of the simulation. If the number is too
-		 *                             low, the simulation will not be safe. Must be
-		 *                             non-negative.
-		 * \param      maxNeighbors    The default maximum number of other agents a
-		 *                             new agent takes into account in the
-		 *                             navigation. The larger this number, the
-		 *                             longer the running time of the simulation.
-		 *                             If the number is too low, the simulation
-		 *                             will not be safe.
-		 * \param      timeHorizon     The default minimal amount of time for which
-		 *                             a new agent's velocities that are computed
-		 *                             by the simulation are safe with respect to
-		 *                             other agents. The larger this number, the
-		 *                             sooner an agent will respond to the presence
-		 *                             of other agents, but the less freedom the
-		 *                             agent has in choosing its velocities.
-		 *                             Must be positive.
-		 * \param      timeHorizonObst The default minimal amount of time for which
-		 *                             a new agent's velocities that are computed
-		 *                             by the simulation are safe with respect to
-		 *                             obstacles. The larger this number, the
-		 *                             sooner an agent will respond to the presence
-		 *                             of obstacles, but the less freedom the agent
-		 *                             has in choosing its velocities.
-		 *                             Must be positive.
-		 * \param      radius          The default radius of a new agent.
-		 *                             Must be non-negative.
-		 * \param      maxSpeed        The default maximum speed of a new agent.
-		 *                             Must be non-negative.
-		 * \param      velocity        The default initial two-dimensional linear
-		 *                             velocity of a new agent (optional).
-		 */
-		RVOSimulator(float timeStep, float neighborDist, size_t maxNeighbors,
-					 float timeHorizon, float timeHorizonObst, float radius,
-					 float maxSpeed, const Vector2 &velocity = Vector2());
+        /**
+         * \brief      Constructs a simulator instance and sets the default
+         *             properties for any new agent that is added.
+         * \param      timeStep        The time step of the simulation.
+         *                             Must be positive.
+         * \param      neighborDist    The default maximum distance (center point
+         *                             to center point) to other agents a new agent
+         *                             takes into account in the navigation. The
+         *                             larger this number, the longer he running
+         *                             time of the simulation. If the number is too
+         *                             low, the simulation will not be safe. Must be
+         *                             non-negative.
+         * \param      maxNeighbors    The default maximum number of other agents a
+         *                             new agent takes into account in the
+         *                             navigation. The larger this number, the
+         *                             longer the running time of the simulation.
+         *                             If the number is too low, the simulation
+         *                             will not be safe.
+         * \param      timeHorizon     The default minimal amount of time for which
+         *                             a new agent's velocities that are computed
+         *                             by the simulation are safe with respect to
+         *                             other agents. The larger this number, the
+         *                             sooner an agent will respond to the presence
+         *                             of other agents, but the less freedom the
+         *                             agent has in choosing its velocities.
+         *                             Must be positive.
+         * \param      timeHorizonObst The default minimal amount of time for which
+         *                             a new agent's velocities that are computed
+         *                             by the simulation are safe with respect to
+         *                             obstacles. The larger this number, the
+         *                             sooner an agent will respond to the presence
+         *                             of obstacles, but the less freedom the agent
+         *                             has in choosing its velocities.
+         *                             Must be positive.
+         * \param      radius          The default radius of a new agent.
+         *                             Must be non-negative.
+         * \param      maxSpeed        The default maximum speed of a new agent.
+         *                             Must be non-negative.
+         * \param      fov             The default field-of-view a new agent (optional).
+         *                             Must be non-negative.
+         * \param      veryCloseRatio  The default very-close-ratio of a new agent (optional).
+         *                             Must be non-negative.
+         * \param      neighborVisibilityWindowSize The default neighbour visibility
+         *                                          window size of a new agent (optional).
+         *                                          Must be non-negative.
+         * \param      velocity        The default initial two-dimensional linear
+         *                             velocity of a new agent (optional).
+         */
+        RVOSimulator(float timeStep, float neighborDist, size_t maxNeighbors,
+                     float timeHorizon, float timeHorizonObst, float radius,
+                     float maxSpeed, const Vector2 &velocity = Vector2(), float fov = 360.0f,
+                     float veryCloseRatio = 0.0f,
+                     size_t neighborVisibilityWindowSize = 0
+        );
 
-		/**
+/**
 		 * \brief      Destroys this simulator instance.
 		 */
 		~RVOSimulator();
@@ -537,7 +547,36 @@ namespace RVO {
 		 */
 		void setAgentRadius(size_t agentNo, float radius);
 
-		/**
+        /**
+         * \brief      Sets the field-of-view of a specified agent.
+         * \param      agentNo         The number of the agent whose fov is to
+         *                             be modified.
+         * \param      fov             The replacement field-of-view value.
+         *                             Must be non-negative.
+         */
+        void setAgentFOV(size_t agentNo, float fov);
+
+        /**
+         * \brief      Sets the very-close-ratio of a specified agent.
+         * \param      agentNo         The number of the agent whose
+         *                             very-close-ratio is to be modified.
+         * \param      veryCloseRatio  The replacement very-close-ratio value.
+         *                             Must be non-negative.
+         */
+        void setAgentVeryCloseRatio(size_t agentNo, float veryCloseRatio);
+
+        /**
+         * \brief      Sets the field-of-view of a specified agent.
+         * \param      agentNo                      The number of the agent whose
+         *                                          neighbour visibility window size
+         *                                          is to be modified.
+         * \param      neighborVisibilityWindowSize The replacement neighbour
+         *                                          visibility window size value.
+         *                                          Must be non-negative.
+         */
+        void setAgentNeighborVisibilityWindowSize(size_t agentNo, size_t neighborVisibilityWindowSize);
+
+        /**
 		 * \brief      Sets the time horizon of a specified agent with respect
 		 *             to other agents.
 		 * \param      agentNo         The number of the agent whose time horizon

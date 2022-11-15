@@ -26,7 +26,8 @@ cdef extern from "RVOSimulator.h" namespace "RVO":
         RVOSimulator()
         RVOSimulator(float timeStep, float neighborDist, size_t maxNeighbors,
                      float timeHorizon, float timeHorizonObst, float radius,
-                     float maxSpeed, const Vector2 & velocity)
+                     float maxSpeed, const Vector2 & velocity, float fov,
+                     float veryCloseRatio, size_t neighborVisibilityWindowSize)
         size_t addAgent(const Vector2 & position)
         size_t addAgent(const Vector2 & position, float neighborDist,
                         size_t maxNeighbors, float timeHorizon,
@@ -69,6 +70,9 @@ cdef extern from "RVOSimulator.h" namespace "RVO":
         void setAgentPosition(size_t agentNo, const Vector2 & position)
         void setAgentPrefVelocity(size_t agentNo, const Vector2 & prefVelocity)
         void setAgentRadius(size_t agentNo, float radius)
+        void setAgentFOV(size_t agentNo, float radius)
+        void setAgentVeryCloseRatio(size_t agentNo, float radius)
+        void setAgentNeighborVisibilityWindowSize(size_t agentNo, float radius)
         void setAgentTimeHorizon(size_t agentNo, float timeHorizon)
         void setAgentTimeHorizonObst(size_t agentNo, float timeHorizonObst)
         void setAgentVelocity(size_t agentNo, const Vector2 & velocity)
@@ -80,12 +84,14 @@ cdef class PyRVOSimulator:
 
     def __cinit__(self, float timeStep, float neighborDist, size_t maxNeighbors,
                   float timeHorizon, float timeHorizonObst, float radius,
-                  float maxSpeed, tuple velocity=(0, 0)):
+                  float maxSpeed, tuple velocity=(0, 0), float fov=360,
+                  float veryCloseRatio=0, size_t neighborVisibilityWindowSize=0):
         cdef Vector2 c_velocity = Vector2(velocity[0], velocity[1])
 
         self.thisptr = new RVOSimulator(timeStep, neighborDist, maxNeighbors,
                                         timeHorizon, timeHorizonObst, radius,
-                                        maxSpeed, c_velocity)
+                                        maxSpeed, c_velocity, fov, veryCloseRatio,
+                                        neighborVisibilityWindowSize)
 
     def __dealloc__(self):
         del self.thisptr
@@ -216,6 +222,12 @@ cdef class PyRVOSimulator:
         self.thisptr.setAgentPrefVelocity(agent_no, c_velocity)
     def setAgentRadius(self, size_t agent_no, float radius):
         self.thisptr.setAgentRadius(agent_no, radius)
+    def setAgentFOV(self, size_t agent_no, float fov):
+        self.thisptr.setAgentFOV(agent_no, fov)
+    def setAgentVeryCloseRatio(self, size_t agent_no, float veryCloseRatio):
+        self.thisptr.setAgentVeryCloseRatio(agent_no, veryCloseRatio)
+    def setAgentNeighborVisibilityWindowSize(self, size_t agent_no, size_t neighborVisibilityWindowSize):
+        self.thisptr.setAgentNeighborVisibilityWindowSize(agent_no, neighborVisibilityWindowSize)
     def setAgentTimeHorizon(self, size_t agent_no, float time_horizon):
         self.thisptr.setAgentTimeHorizon(agent_no, time_horizon)
     def setAgentTimeHorizonObst(self, size_t agent_no, float timeHorizonObst):

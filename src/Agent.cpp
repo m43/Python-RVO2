@@ -38,7 +38,9 @@
 #include "Obstacle.h"
 
 namespace RVO {
-	Agent::Agent(RVOSimulator *sim) : maxNeighbors_(0), maxSpeed_(0.0f), neighborDist_(0.0f), radius_(0.0f), sim_(sim), timeHorizon_(0.0f), timeHorizonObst_(0.0f), id_(0) { }
+    Agent::Agent(RVOSimulator *sim) : maxNeighbors_(0), maxSpeed_(0.0f), neighborDist_(0.0f), radius_(0.0f), sim_(sim),
+                                      timeHorizon_(0.0f), timeHorizonObst_(0.0f), id_(0), fov_(360.0f),
+                                      veryCloseRatio_(0.0f), neighborVisibilityWindowSize_(0) {}
 
 	void Agent::computeNeighbors()
 	{
@@ -368,21 +370,20 @@ namespace RVO {
 
     void Agent::insertAgentNeighbor(const Agent *agent, float &rangeSq) {
         // TODO Move hardcoded constants to possibly make things configurable
-        size_t neighborVisibilityWindowSize_ = 100;
-        double fov = 135;
-        double veryCloseRatio = 0.1;
+
 
         if (this == agent) return;
 
         const float distSq = absSq(position_ - agent->position_);
         if (distSq >= rangeSq) return;
 
+        // The agent is visible if it is very close, or if it is in the FOV
+        bool agentVeryClose = distSq < rangeSq * veryCloseRatio_ * veryCloseRatio_;
+        bool agentInFOV = cosine_similarity(velocity_, agent->position_ - position_) > cos((fov_ / 2) * M_PI / 180);
+        bool agentVisible = agentVeryClose || agentInFOV;
+
         // Not neighbors if the agent could not "see" the agent in the last N steps.
         if (neighborVisibilityWindowSize_ > 0) {
-            // The agent is visible if it is very close, or if it is in the FOV of 200 degrees
-            bool agentVeryClose = distSq < rangeSq * veryCloseRatio * veryCloseRatio;
-            bool agentInFOV = cosine_similarity(velocity_, agent->position_ - position_) > cos((fov / 2) * M_PI / 180);
-            bool agentVisible = agentVeryClose || agentInFOV;
 
             if (neighborVisibilityWindowMap_.count(agent->id_) == 0) {
                 neighborVisibilityWindowMap_[agent->id_] = std::make_shared<std::deque<bool>>();
@@ -397,6 +398,8 @@ namespace RVO {
             bool agentVisibleInWindow = std::accumulate(visibilityWindow->begin(), visibilityWindow->end(), false,
                                                         std::logical_or<>());
             if (!agentVisibleInWindow) return;
+        } else {
+            if (!agentVisible) return;
         }
 
         if (agentNeighbors_.size() < maxNeighbors_) {

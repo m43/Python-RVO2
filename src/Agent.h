@@ -95,6 +95,9 @@ namespace RVO {
 		size_t maxNeighbors_;
 		float maxSpeed_;
 		float neighborDist_;
+        size_t neighborVisibilityWindowSize_;
+        double fov_;
+        double veryCloseRatio_;
 		Vector2 newVelocity_;
 		std::vector<std::pair<float, const Obstacle *> > obstacleNeighbors_;
 		std::vector<Line> orcaLines_;
