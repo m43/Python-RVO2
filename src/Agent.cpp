@@ -395,8 +395,11 @@ namespace RVO {
                 visibilityWindow->pop_back();
             }
 
-            bool agentVisibleInWindow = std::accumulate(visibilityWindow->begin(), visibilityWindow->end(), false,
-                                                        std::logical_or<>());
+            bool agentVisibleInWindow = false;
+            for (bool visible: *visibilityWindow) {
+                agentVisibleInWindow = agentVisibleInWindow || visible;
+            }
+
             if (!agentVisibleInWindow) return;
         } else {
             if (!agentVisible) return;
